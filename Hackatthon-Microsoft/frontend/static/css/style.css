@@ -1,0 +1,136 @@
+/* Dark Maritime Design System */
+
+:root {
+  --bg-deep: #070b14;
+  --panel-bg: #0d1424;
+  --accent-cyan: #00f2fe;
+  --accent-blue: #3b82f6;
+  --risk-critical: #ef4444;
+  --risk-high: #f97316;
+  --risk-watch: #eab308;
+  --risk-normal: #10b981;
+}
+
+/* Custom Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #090d16;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Leaflet Overrides for Dark Mode */
+.leaflet-container {
+  background-color: #050811 !important;
+}
+
+.leaflet-tile {
+  filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.6);
+}
+
+.leaflet-popup-content-wrapper {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
+}
+
+.leaflet-popup-tip {
+  background-color: #0f172a !important;
+}
+
+/* Vessel Marker CSS */
+.vessel-marker-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.vessel-marker-critical {
+  animation: pulse-ring-crit 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes pulse-ring-crit {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0.7));
+  }
+  70% {
+    filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.9));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0));
+  }
+}
+
+.vessel-marker-high {
+  animation: pulse-ring-high 2.5s infinite;
+}
+
+@keyframes pulse-ring-high {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(249, 115, 22, 0.6));
+  }
+  70% {
+    filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.8));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 rgba(249, 115, 22, 0));
+  }
+}
+
+/* Storm Animation */
+.storm-circle {
+  animation: storm-rotate 20s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes storm-rotate {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 100;
+  }
+}
+
+/* Animation utilities */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 25s linear infinite;
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.15s ease-out forwards;
+}

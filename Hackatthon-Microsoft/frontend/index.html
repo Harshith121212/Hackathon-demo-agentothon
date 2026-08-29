@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maritime Operations Intelligence Platform</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-[#090d16] text-slate-100 font-['Inter',sans-serif] h-screen flex flex-col overflow-hidden select-none">
+
+  <!-- Top Navigation & Global Header -->
+  <header class="bg-[#0f172a]/95 border-b border-slate-800/80 px-5 py-2.5 flex items-center justify-between z-30 shadow-2xl backdrop-blur-md">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 ring-1 ring-cyan-400/40">
+        <i data-lucide="compass" class="w-5 h-5 text-white animate-spin-slow"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-base font-bold tracking-wide text-white uppercase font-mono">Maritime Operations Intelligence</h1>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 font-mono font-semibold">ENTERPRISE CORE</span>
+        </div>
+        <p class="text-xs text-slate-400">Continuous Spatiotemporal Risk Engine & AI Human-in-the-Loop Operations</p>
+      </div>
+    </div>
+
+    <!-- Scenario Quick Injector Bar -->
+    <div class="flex items-center space-x-2 bg-slate-900/80 border border-slate-700/60 rounded-lg p-1">
+      <span class="text-[11px] font-mono font-semibold text-slate-400 px-2 flex items-center">
+        <i data-lucide="zap" class="w-3.5 h-3.5 mr-1 text-amber-400"></i> LIVE SCENARIOS:
+      </span>
+      <button id="btn-scenario-typhoon" class="px-3 py-1 text-xs font-semibold rounded bg-rose-950/70 hover:bg-rose-900 border border-rose-600/60 text-rose-300 hover:text-white transition flex items-center shadow-sm">
+        <i data-lucide="cloud-lightning" class="w-3.5 h-3.5 mr-1 text-rose-400"></i> Typhoon Malakas (OS-104)
+      </button>
+      <button id="btn-scenario-redsea" class="px-3 py-1 text-xs font-semibold rounded bg-amber-950/60 hover:bg-amber-900 border border-amber-600/60 text-amber-300 hover:text-white transition flex items-center">
+        <i data-lucide="shield-alert" class="w-3.5 h-3.5 mr-1 text-amber-400"></i> Red Sea Security Alert
+      </button>
+      <button id="btn-scenario-reset" class="px-3 py-1 text-xs font-semibold rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 transition flex items-center">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 mr-1"></i> Reset
+      </button>
+    </div>
+
+    <!-- Navigation View Tabs -->
+    <div class="flex items-center space-x-2">
+      <div class="flex bg-slate-900 border border-slate-800 rounded-lg p-1">
+        <button id="tab-command" class="px-3 py-1 text-xs font-medium rounded-md bg-cyan-600 text-white shadow transition flex items-center">
+          <i data-lucide="layout-dashboard" class="w-3.5 h-3.5 mr-1.5"></i> Operations Command
+        </button>
+        <button id="tab-actions" class="px-3 py-1 text-xs font-medium rounded-md text-slate-400 hover:text-white transition flex items-center relative">
+          <i data-lucide="mail-check" class="w-3.5 h-3.5 mr-1.5"></i> Action Center
+          <span id="pending-actions-badge" class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-rose-500 text-white hidden">0</span>
+        </button>
+        <button id="tab-observability" class="px-3 py-1 text-xs font-medium rounded-md text-slate-400 hover:text-white transition flex items-center">
+          <i data-lucide="activity" class="w-3.5 h-3.5 mr-1.5"></i> Observability & Scale
+        </button>
+      </div>
+
+      <!-- Live UTC Clock -->
+      <div class="bg-slate-900/90 border border-slate-800 px-3 py-1 rounded-lg text-right font-mono text-xs">
+        <div class="text-cyan-400 font-bold" id="live-utc-time">00:00:00 UTC</div>
+        <div class="text-[10px] text-slate-500" id="live-utc-date">2026-08-29</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Fleet Risk KPI Summary Banner -->
+  <section class="bg-[#0b1220] border-b border-slate-800/80 px-5 py-2 grid grid-cols-6 gap-3 text-xs z-20">
+    <div class="bg-slate-900/70 border border-slate-800 rounded-lg p-2 flex items-center justify-between">
+      <div>
+        <div class="text-slate-400 text-[11px]">Monitored Fleet</div>
+        <div class="text-lg font-bold font-mono text-white" id="kpi-total-vessels">50</div>
+      </div>
+      <i data-lucide="ship" class="w-5 h-5 text-slate-500"></i>
+    </div>
+    <div class="bg-rose-950/20 border border-rose-900/40 rounded-lg p-2 flex items-center justify-between">
+      <div>
+        <div class="text-rose-400 text-[11px] font-semibold">Critical Risk</div>
+        <div class="text-lg font-bold font-mono text-rose-400" id="kpi-critical-count">0</div>
+      </div>
+      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+    </div>
+    <div class="bg-amber-950/20 border border-amber-900/40 rounded-lg p-2 flex items-center justify-between">
+      <div>
+        <div class="text-amber-400 text-[11px] font-semibold">High Exposure</div>
+        <div class="text-lg font-bold font-mono text-amber-400" id="kpi-high-count">0</div>
+      </div>
+      <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+    </div>
+    <div class="bg-yellow-950/20 border border-yellow-900/40 rounded-lg p-2 flex items-center justify-between">
+      <div>
+        <div class="text-yellow-400 text-[11px] font-semibold">Watch Tier</div>
+        <div class="text-lg font-bold font-mono text-yellow-400" id="kpi-watch-count">0</div>
+      </div>
+      <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+    </div>
+    <div class="bg-emerald-950/20 border border-emerald-900/40 rounded-lg p-2 flex items-center justify-between">
+      <div>
+        <div class="text-emerald-400 text-[11px] font-semibold">Nominal / Clear</div>
+        <div class="text-lg font-bold font-mono text-emerald-400" id="kpi-normal-count">50</div>
+      </div>
+      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+    </div>
+    <div class="bg-slate-900/70 border border-slate-800 rounded-lg p-2 flex items-center justify-between">
+      <div>
+        <div class="text-slate-400 text-[11px]">Filter Latency</div>
+        <div class="text-lg font-bold font-mono text-cyan-400" id="kpi-filter-latency">0.45 ms</div>
+      </div>
+      <i data-lucide="cpu" class="w-5 h-5 text-cyan-500"></i>
+    </div>
+  </section>
+
+  <!-- Main View Container -->
+  <main class="flex-1 flex overflow-hidden relative">
+
+    <!-- VIEW 1: Operations Command (Map + Risk Queue) -->
+    <div id="view-command" class="w-full h-full flex">
+      <!-- Left Panel: Interactive Fleet Map -->
+      <div class="flex-1 h-full relative bg-[#070b14]">
+        <div id="map" class="w-full h-full"></div>
+
+        <!-- Map Floating Overlay Legend -->
+        <div class="absolute bottom-4 left-4 z-[400] bg-slate-900/90 border border-slate-800 rounded-lg p-3 text-xs shadow-2xl backdrop-blur-md space-y-2">
+          <div class="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider">Map Legend</div>
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-rose-500 ring-2 ring-rose-400/50"></span>
+            <span class="text-slate-300">Critical Exposure (Immediate Intervention)</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+            <span class="text-slate-300">High Risk (Investigate Consequences)</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+            <span class="text-slate-300">Watch Tier (Marginal Seas)</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+            <span class="text-slate-300">Nominal Course</span>
+          </div>
+          <div class="pt-1 border-t border-slate-800 flex items-center space-x-2">
+            <span class="w-3 h-3 rounded bg-rose-500/30 border border-rose-500"></span>
+            <span class="text-slate-300">Active Cyclone / Severe Gale Radius</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded bg-amber-500/30 border border-amber-500"></span>
+            <span class="text-slate-300">Maritime Security / Conflict Zone</span>
+          </div>
+        </div>
+
+        <!-- Selected Vessel Route Card Floating Overlay -->
+        <div id="vessel-quick-card" class="hidden absolute top-4 left-4 z-[400] bg-slate-900/95 border border-cyan-500/40 rounded-xl p-4 text-xs shadow-2xl backdrop-blur-md w-80 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="ship" class="w-4 h-4 text-cyan-400"></i>
+              <span id="quick-vessel-name" class="font-bold text-white text-sm">Ocean Star</span>
+            </div>
+            <span id="quick-risk-tier" class="px-2 py-0.5 text-[10px] font-bold rounded bg-rose-950 border border-rose-600 text-rose-400">CRITICAL</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-[11px] font-mono">
+            <div>
+              <span class="text-slate-500">Voyage ID:</span>
+              <div id="quick-voyage-id" class="text-slate-200 font-semibold">OS-104</div>
+            </div>
+            <div>
+              <span class="text-slate-500">Speed / Heading:</span>
+              <div id="quick-speed-heading" class="text-slate-200">18.5 kts / 295°</div>
+            </div>
+            <div>
+              <span class="text-slate-500">Departure:</span>
+              <div id="quick-dep-port" class="text-slate-200">Singapore</div>
+            </div>
+            <div>
+              <span class="text-slate-500">Destination:</span>
+              <div id="quick-dest-port" class="text-slate-200">Rotterdam</div>
+            </div>
+          </div>
+          <div id="quick-exposure-box" class="bg-slate-950/80 border border-slate-800 rounded p-2 text-[11px] text-slate-300">
+            <div class="font-bold text-rose-400 flex items-center">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5 mr-1"></i> Exposure Alert
+            </div>
+            <div id="quick-exposure-desc" class="mt-1 text-slate-400">Deterministic intercept with 9.2m waves.</div>
+          </div>
+          <div class="flex space-x-2 pt-1">
+            <button id="btn-quick-investigate" class="flex-1 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded shadow transition flex items-center justify-center">
+              <i data-lucide="bot" class="w-3.5 h-3.5 mr-1.5"></i> View Investigation
+            </button>
+            <button id="btn-quick-close" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Risk Queue & Fleet Directory -->
+      <div class="w-[420px] h-full bg-[#0d1424] border-l border-slate-800/80 flex flex-col z-10 shadow-2xl">
+        <!-- Panel Header -->
+        <div class="p-3 border-b border-slate-800/80 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="alert-octagon" class="w-4 h-4 text-cyan-400"></i>
+              <span class="font-bold text-sm tracking-wide text-white uppercase font-mono">Risk Queue</span>
+            </div>
+            <span id="queue-total-count" class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">50 Vessels</span>
+          </div>
+
+          <!-- Search & Filter Controls -->
+          <div class="relative">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
+            <input id="risk-search-input" type="text" placeholder="Search vessel, voyage, port..." class="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500">
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex items-center space-x-1 pt-1 overflow-x-auto text-[11px] font-mono">
+            <button class="filter-pill active px-2 py-0.5 rounded bg-cyan-600 text-white font-semibold" data-tier="ALL">ALL (50)</button>
+            <button class="filter-pill px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-rose-400 font-semibold" data-tier="CRITICAL">CRITICAL (<span id="pill-crit-count">0</span>)</button>
+            <button class="filter-pill px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold" data-tier="HIGH">HIGH (<span id="pill-high-count">0</span>)</button>
+            <button class="filter-pill px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-yellow-400 font-semibold" data-tier="WATCH">WATCH (<span id="pill-watch-count">0</span>)</button>
+            <button class="filter-pill px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 font-semibold" data-tier="NORMAL">NORMAL</button>
+          </div>
+        </div>
+
+        <!-- Risk List Cards Container -->
+        <div id="risk-cards-list" class="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
+          <!-- Cards populated dynamically via JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 2: Action Center (Human-in-the-Loop Approval) -->
+    <div id="view-actions" class="w-full h-full hidden flex flex-col bg-[#0a0e1a] p-6 overflow-y-auto custom-scrollbar">
+      <div class="max-w-6xl w-full mx-auto space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-white flex items-center font-mono">
+              <i data-lucide="shield-check" class="w-6 h-6 mr-2 text-cyan-400"></i> Human-in-the-Loop Action Approval Center
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Autonomous AI Agent drafts consequential stakeholder communications. Human authorization required prior to dispatch.</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="text-xs font-mono text-slate-400">Approval Policy: <strong class="text-emerald-400 font-semibold">Strict Human Gate</strong></span>
+          </div>
+        </div>
+
+        <!-- Draft Actions List -->
+        <div id="action-cards-container" class="space-y-4">
+          <!-- Draft cards populated by actions.js -->
+        </div>
+
+        <!-- Action Audit Log -->
+        <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-5 shadow-xl space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h3 class="text-sm font-bold text-slate-200 font-mono flex items-center">
+              <i data-lucide="history" class="w-4 h-4 mr-2 text-indigo-400"></i> Action Execution Audit Trail
+            </h3>
+            <span class="text-[11px] font-mono text-slate-500">Immutable Event Log</span>
+          </div>
+          <div id="action-audit-table" class="text-xs font-mono divide-y divide-slate-800/60">
+            <div class="text-slate-500 py-3 text-center">No actions approved or dispatched yet. Trigger an investigation to generate drafts.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: Observability & Scale Dashboard -->
+    <div id="view-observability" class="w-full h-full hidden flex flex-col bg-[#0a0e1a] p-6 overflow-y-auto custom-scrollbar">
+      <div class="max-w-6xl w-full mx-auto space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-white flex items-center font-mono">
+              <i data-lucide="gauge" class="w-6 h-6 mr-2 text-cyan-400"></i> System Observability & Fleet-Scale Evaluation
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Multi-tier filtering pipeline efficiency, latency benchmarks, and agent tool execution metrics.</p>
+          </div>
+          <span class="px-2.5 py-1 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300 font-mono text-xs">Production Grade Telemetry</span>
+        </div>
+
+        <!-- Pipeline Funnel Architecture Card -->
+        <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
+          <h3 class="text-sm font-bold text-white font-mono flex items-center">
+            <i data-lucide="filter" class="w-4 h-4 mr-2 text-cyan-400"></i> Fleet-Scale Processing Funnel (1,000 Ships Architecture)
+          </h3>
+          <p class="text-xs text-slate-400">Instead of executing 1,000 expensive LLM calls, the platform uses deterministic $O(N)$ spatial indexing and spherical trajectory projections to filter 95%+ of ships in sub-milliseconds.</p>
+          
+          <div class="grid grid-cols-4 gap-4 pt-2 text-center font-mono">
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-4">
+              <div class="text-xs text-slate-400">Stage 1: Global Fleet</div>
+              <div class="text-2xl font-bold text-white mt-1" id="funnel-total">50 Vessels</div>
+              <div class="text-[10px] text-slate-500 mt-1">100% AIS Telemetry</div>
+            </div>
+            <div class="bg-slate-900 border border-cyan-900/60 rounded-lg p-4">
+              <div class="text-xs text-cyan-400">Stage 2: Spatial Filter</div>
+              <div class="text-2xl font-bold text-cyan-300 mt-1" id="funnel-candidates">6 Candidates</div>
+              <div class="text-[10px] text-cyan-500 mt-1">Latency: ~0.45 ms</div>
+            </div>
+            <div class="bg-slate-900 border border-amber-900/60 rounded-lg p-4">
+              <div class="text-xs text-amber-400">Stage 3: Spatiotemporal Math</div>
+              <div class="text-2xl font-bold text-amber-300 mt-1" id="funnel-significant">2 Significant</div>
+              <div class="text-[10px] text-amber-500 mt-1">Latency: ~2.10 ms</div>
+            </div>
+            <div class="bg-slate-900 border border-rose-900/60 rounded-lg p-4">
+              <div class="text-xs text-rose-400">Stage 4: AI Agent Investigation</div>
+              <div class="text-2xl font-bold text-rose-300 mt-1" id="funnel-agent">1 Investigation</div>
+              <div class="text-[10px] text-rose-500 mt-1">Latency: ~420 ms</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Latencies & Metrics Grid -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="text-xs text-slate-400 font-mono">Coarse Spatial Index Latency</div>
+            <div class="text-3xl font-bold font-mono text-emerald-400" id="obs-filter-latency">0.45 ms</div>
+            <div class="text-[11px] text-slate-500">Bounding-box spatial intersection over global fleet</div>
+          </div>
+          <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="text-xs text-slate-400 font-mono">Trajectory Projection Latency</div>
+            <div class="text-3xl font-bold font-mono text-cyan-400" id="obs-traj-latency">2.10 ms</div>
+            <div class="text-[11px] text-slate-500">Spherical great-circle waypoint arc calculation</div>
+          </div>
+          <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="text-xs text-slate-400 font-mono">AI Agent Reasoning & Brief Latency</div>
+            <div class="text-3xl font-bold font-mono text-indigo-400" id="obs-agent-latency">420 ms</div>
+            <div class="text-[11px] text-slate-500">Multi-tool ERP synthesis & brief generation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL / DRAWER: AI Investigation Brief View -->
+    <div id="investigation-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="bg-[#0c1322] border border-slate-700/80 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-scale-up">
+        <!-- Modal Header -->
+        <div class="bg-[#111c30] border-b border-slate-700 px-6 py-4 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-cyan-600/30 border border-cyan-500/50 flex items-center justify-center">
+              <i data-lucide="bot" class="w-5 h-5 text-cyan-400"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-base font-bold text-white font-mono" id="modal-vessel-title">Investigation: Ocean Star (OS-104)</h3>
+                <span id="modal-risk-badge" class="px-2 py-0.5 text-[10px] font-bold rounded bg-rose-950 border border-rose-600 text-rose-400">🔴 CRITICAL</span>
+              </div>
+              <p class="text-xs text-slate-400">AI Investigation Agent Brief • Multi-Disciplinary ERP Impact</p>
+            </div>
+          </div>
+          <button id="btn-modal-close" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Modal Body Content -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar text-xs">
+          <!-- Executive Summary Headline -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-bold flex items-center">
+              <i data-lucide="file-text" class="w-3.5 h-3.5 mr-1.5"></i> Executive Summary
+            </div>
+            <div id="modal-headline" class="text-sm font-bold text-white leading-relaxed">
+              Severe Weather Exposure Intersecting Projected Voyage OS-104 — High-Value Cargo & SLA Delivery Breach Risk
+            </div>
+            <div id="modal-why-text" class="text-slate-300 leading-relaxed pt-1 border-t border-slate-800/80">
+              Loading deterministic reasoning...
+            </div>
+          </div>
+
+          <!-- Key Metrics Row -->
+          <div class="grid grid-cols-4 gap-3 font-mono text-center">
+            <div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3">
+              <div class="text-slate-400 text-[10px]">Exposure Window</div>
+              <div id="modal-exposure-window" class="text-white font-semibold mt-1">18:00 – 23:00 UTC</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3">
+              <div class="text-slate-400 text-[10px]">Max Sea State</div>
+              <div id="modal-max-weather" class="text-rose-400 font-semibold mt-1">9.2m Waves / 62 kts</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3">
+              <div class="text-slate-400 text-[10px]">Total Financial Exposure</div>
+              <div id="modal-financial-exposure" class="text-amber-400 font-bold mt-1">$170,500</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3">
+              <div class="text-slate-400 text-[10px]">Agent Confidence</div>
+              <div id="modal-confidence-score" class="text-cyan-400 font-bold mt-1">78.0%</div>
+            </div>
+          </div>
+
+          <!-- Cross-Departmental Business Impacts -->
+          <div class="space-y-3">
+            <div class="text-[11px] font-mono uppercase tracking-wider text-slate-300 font-bold flex items-center">
+              <i data-lucide="layers" class="w-3.5 h-3.5 mr-1.5 text-indigo-400"></i> Correlated Operational Consequences
+            </div>
+            <div id="modal-impacts-list" class="space-y-2.5">
+              <!-- Rendered via JavaScript -->
+            </div>
+          </div>
+
+          <!-- Agent Reasoning & Tool Invocation Trace (Collapsible) -->
+          <div class="bg-[#090d16] border border-slate-800 rounded-xl p-4 space-y-2">
+            <div class="flex items-center justify-between cursor-pointer" id="toggle-reasoning-trace">
+              <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold flex items-center">
+                <i data-lucide="terminal" class="w-3.5 h-3.5 mr-1.5 text-cyan-400"></i> Agent Tool Execution & Reasoning Trace
+              </div>
+              <span class="text-[10px] text-cyan-400 font-mono">View Full Step Log ▾</span>
+            </div>
+            <div id="modal-reasoning-trace" class="pt-2 font-mono text-[11px] text-slate-300 space-y-1.5 border-t border-slate-800/80">
+              <!-- Trace populated via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="bg-[#111c30] border-t border-slate-700 px-6 py-3 flex items-center justify-between">
+          <div class="text-xs text-slate-400 flex items-center">
+            <i data-lucide="info" class="w-3.5 h-3.5 mr-1 text-cyan-400"></i> Human approval required before sending customer advisory.
+          </div>
+          <div class="flex space-x-3">
+            <button id="btn-modal-close-secondary" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold">
+              Dismiss
+            </button>
+            <button id="btn-modal-open-actions" class="px-4 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-lg text-xs shadow-lg flex items-center">
+              <i data-lucide="mail" class="w-3.5 h-3.5 mr-1.5"></i> Review & Authorize Draft Actions
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Frontend JavaScript Modules -->
+  <script src="/static/js/map.js"></script>
+  <script src="/static/js/agent_view.js"></script>
+  <script src="/static/js/actions.js"></script>
+  <script src="/static/js/metrics.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  maritime-platform:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: maritime-ops-platform
+    ports:
+      - "8000:8000"
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-auto}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-}
+    restart: unless-stopped
